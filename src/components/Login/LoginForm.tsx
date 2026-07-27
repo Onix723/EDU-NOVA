@@ -93,7 +93,7 @@ export default function LoginForm() {
   return (
     <motion.div 
       className="relative z-10 w-[350px]" 
-      animate={{ height: isRegistering ? 560 : 450 }}
+      animate={{ height: isRegistering ? 720 : 450 }}
       transition={{ type: "spring", stiffness: 260, damping: 25 }}
       style={{ perspective: '1000px' }}
     >

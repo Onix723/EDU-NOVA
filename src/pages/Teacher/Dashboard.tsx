@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function TeacherDashboard() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [aiAnalysis, setAIAnalysis] = useState<any[]>([]);
   const [stats, setStats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,12 +81,13 @@ export default function TeacherDashboard() {
   return (
     <div className="space-y-8">
       <motion.div 
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
         className="flex justify-between items-end"
       >
         <div>
-          <h2 className="text-4xl font-bold text-white">Bienvenido, Prof.</h2>
+          <h2 className="text-4xl font-bold text-white">Hola, {profile?.username} 👋</h2>
           <p className="text-gray-400 mt-2">Análisis adaptativo de tu aula inteligente hoy.</p>
         </div>
         <div className="text-right text-gray-500 text-sm">
@@ -102,12 +103,18 @@ export default function TeacherDashboard() {
             {stats.map((stat, index) => (
               <motion.div 
                 key={stat.label}
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white/[0.03] backdrop-blur-md border border-white/10 p-6 rounded-3xl relative overflow-hidden group hover:border-white/30 transition-all"
+                whileHover={{ scale: 1.03, y: -5 }}
+                transition={{ 
+                  delay: index * 0.05, 
+                  type: 'spring', 
+                  stiffness: 400, 
+                  damping: 25 
+                }}
+                className="glass p-6 rounded-3xl relative overflow-hidden group hover:border-white/30 transition-all duration-150"
               >
-                <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${stat.color} opacity-10 blur-2xl group-hover:opacity-20 transition-opacity`} />
+                <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${stat.color} opacity-10 blur-2xl group-hover:opacity-20 transition-opacity duration-150`} />
                 <div className="flex items-center gap-4">
                   <div className={`p-3 rounded-2xl bg-gradient-to-br ${stat.color} text-white shadow-lg`}>
                     <stat.icon size={24} />
@@ -123,10 +130,10 @@ export default function TeacherDashboard() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <motion.div 
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="lg:col-span-2 bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-3xl p-6"
+              transition={{ delay: 0.2 }}
+              className="lg:col-span-2 glass rounded-3xl p-6"
             >
               <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
                 <AlertCircle size={20} className="text-[#12B1D1]" />
@@ -134,7 +141,12 @@ export default function TeacherDashboard() {
               </h3>
               <div className="space-y-4">
                 {aiAnalysis.map((student, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all">
+                  <motion.div 
+                    key={i} 
+                    whileHover={{ x: 5, backgroundColor: 'rgba(255,255,255,0.05)' }}
+                    transition={{ duration: 0.1 }}
+                    className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/5 transition-all duration-150 cursor-default"
+                  >
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 border border-white/20 flex items-center justify-center text-xs font-bold">
                         {student.name[0]}
@@ -150,7 +162,7 @@ export default function TeacherDashboard() {
                     }`}>
                       {student.risk}
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
                 {aiAnalysis.length === 0 && (
                   <div className="py-10 text-center text-gray-500">No hay datos suficientes para el análisis de IA.</div>
@@ -159,25 +171,29 @@ export default function TeacherDashboard() {
             </motion.div>
 
             <motion.div 
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 }}
-              className="bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-3xl p-6"
+              transition={{ delay: 0.3 }}
+              className="glass rounded-3xl p-6"
             >
               <h3 className="text-xl font-semibold text-white mb-6">Acciones Rápidas</h3>
               <div className="space-y-3">
-                <button className="w-full p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-left transition-all group">
-                  <p className="text-sm font-medium text-white group-hover:text-[#12B1D1]">Subir Nuevo Material</p>
-                  <p className="text-xs text-gray-500">Cargar PDFs, Videos o Enlaces</p>
-                </button>
-                <button className="w-full p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-left transition-all group">
-                  <p className="text-sm font-medium text-white group-hover:text-[#12B1D1]">Generar Reporte AI</p>
-                  <p className="text-xs text-gray-500">Resumen de rendimiento del grupo</p>
-                </button>
-                <button className="w-//full p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-left transition-all group">
-                  <p className="text-sm font-medium text-white group-hover:text-[#12B1D1]">Enviar Notificación</p>
-                  <p className="text-xs text-gray-500">Avisar a todos los estudiantes</p>
-                </button>
+                {[
+                  { label: 'Subir Nuevo Material', desc: 'Cargar PDFs, Videos o Enlaces' },
+                  { label: 'Generar Reporte AI', desc: 'Resumen de rendimiento del grupo' },
+                  { label: 'Enviar Notificación', desc: 'Avisar a todos los estudiantes' },
+                ].map((action, i) => (
+                  <motion.button 
+                    key={i}
+                    whileHover={{ scale: 1.01, backgroundColor: 'rgba(255,255,255,0.1)' }}
+                    whileTap={{ scale: 0.99 }}
+                    transition={{ duration: 0.1 }}
+                    className="w-full p-4 rounded-2xl bg-white/5 border border-white/10 text-left transition-all duration-150 group"
+                  >
+                    <p className="text-sm font-medium text-white group-hover:text-[#12B1D1]">{action.label}</p>
+                    <p className="text-xs text-gray-500">{action.desc}</p>
+                  </motion.button>
+                ))}
               </div>
             </motion.div>
           </div>

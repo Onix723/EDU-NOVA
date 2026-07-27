@@ -3,18 +3,38 @@ import { BookOpen, TrendingUp, Clock, Award } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
+import { getStoredMessages } from '../../lib/studentMessages';
 
 export default function StudentDashboard() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [courses, setCourses] = useState<any[]>([]);
   const [avgGrade, setAvgGrade] = useState('0.0');
   const [pendingTasks, setPendingTasks] = useState(0);
+  const [teacherMessages, setTeacherMessages] = useState<any[]>([]);
 
-  useEffect(() => {
-    fetchStudentData();
-  }, [user]);
+  const fetchTeacherMessages = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('student_messages')
+        .select('*')
+        .eq('recipient_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      setTeacherMessages(data || []);
+    } catch (err) {
+      console.warn('No se pudieron cargar mensajes desde Supabase, se mostrarán los locales.', err);
+      setTeacherMessages(getStoredMessages(user.id));
+    }
+  };
 
   const fetchStudentData = async () => {
+
     try {
       
       // 1. Fetch enrolled courses
@@ -49,6 +69,24 @@ export default function StudentDashboard() {
     }
   };
 
+  useEffect(() => {
+    fetchStudentData();
+    fetchTeacherMessages();
+
+    const intervalId = window.setInterval(() => {
+      fetchTeacherMessages();
+    }, 3000);
+
+    return () => window.clearInterval(intervalId);
+  }, [user]);
+
+  const groupedMessages = teacherMessages.reduce<Record<string, any[]>>((acc, message) => {
+    const key = message.subject || 'General';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(message);
+    return acc;
+  }, {});
+
   const stats = [
     { icon: BookOpen, label: 'Cursos Activos', value: courses.length.toString(), color: 'from-blue-500 to-cyan-400' },
     { icon: TrendingUp, label: 'Promedio Actual', value: avgGrade, color: 'from-emerald-500 to-teal-400' },
@@ -64,7 +102,7 @@ export default function StudentDashboard() {
         className="flex justify-between items-end"
       >
         <div>
-          <h2 className="text-4xl font-bold text-white">Hola, Estudiante 👋</h2>
+          <h2 className="text-4xl font-bold text-white">Hola, {profile?.username} 👋</h2>
           <p className="text-gray-400 mt-2">Sigue impulsando tu conocimiento hoy.</p>
         </div>
         <div className="text-right text-gray-500 text-sm">
@@ -130,6 +168,39 @@ export default function StudentDashboard() {
           <div className="space-y-3">
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center text-gray-500 text-sm">
               No hay tareas pendientes para el momento.
+            </div>
+
+            <div className="mt-4 border-t border-white/10 pt-4">
+              <h4 className="mb-3 text-sm font-semibold text-white">Mensajes del profesor</h4>
+              <div className="space-y-4">
+                {teacherMessages.length > 0 ? Object.entries(groupedMessages).map(([subject, messages]) => (
+                  <div key={subject} className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-300">{subject}</p>
+                    <div className="mt-3 space-y-3">
+                      {messages.map((message) => (
+                        <div key={message.id} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                          <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-200">
+                            {message.sender_name || 'Profesor'}
+                          </p>
+                          <p className="mt-2 text-sm text-gray-100">{message.content}</p>
+                          <p className="mt-2 text-[11px] text-gray-400">
+                            {new Date(message.created_at).toLocaleString('es-ES', {
+                              day: '2-digit',
+                              month: 'short',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )) : (
+                  <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4 text-center text-sm text-gray-500">
+                    No hay avisos del profesor todavía.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </motion.div>

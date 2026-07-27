@@ -10,7 +10,7 @@ export default function TeacherDashboard() {
         {/* Header */}
         <div className="flex justify-between items-center mb-12">
           <div>
-            <h1 className="text-4xl font-bold">Bienvenido, Prof. {profile?.username}</h1>
+            <h1 className="text-4xl font-bold">Hola {profile?.username}</h1>
             <p className="text-gray-400 mt-2">Dashboard de Profesor</p>
           </div>
           <button

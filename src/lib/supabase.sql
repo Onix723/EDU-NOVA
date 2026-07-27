@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   email TEXT NOT NULL,
   username TEXT NOT NULL UNIQUE,
   role TEXT NOT NULL CHECK (role IN ('student', 'teacher')),
+  subject TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -122,6 +123,7 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
   question_text TEXT NOT NULL,
   options TEXT[] NOT NULL,
   correct_option_index INT NOT NULL,
+  published BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -256,6 +258,35 @@ DROP POLICY IF EXISTS "Teachers can view students grades" ON grades;
 CREATE POLICY "Teachers can view students grades" ON grades
   FOR SELECT USING (
     course_id IN (SELECT id FROM courses WHERE teacher_id = auth.uid())
+  );
+
+-- ====================================
+-- 11. STUDENT_MESSAGES TABLE
+-- ====================================
+CREATE TABLE IF NOT EXISTS student_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  recipient_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  sender_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  sender_role TEXT NOT NULL CHECK (sender_role IN ('teacher', 'student')),
+  content TEXT NOT NULL,
+  subject TEXT,
+  sender_name TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  read_at TIMESTAMP WITH TIME ZONE
+);
+
+ALTER TABLE student_messages ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view messages involving them" ON student_messages;
+CREATE POLICY "Users can view messages involving them" ON student_messages
+  FOR SELECT USING (auth.uid() = recipient_id OR auth.uid() = sender_id);
+
+DROP POLICY IF EXISTS "Teachers can send messages to students" ON student_messages;
+CREATE POLICY "Teachers can send messages to students" ON student_messages
+  FOR INSERT WITH CHECK (
+    sender_role = 'teacher'
+    AND auth.uid() = sender_id
+    AND recipient_id IN (SELECT id FROM profiles WHERE role = 'student')
   );
 
 -- ====================================
