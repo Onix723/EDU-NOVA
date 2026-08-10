@@ -91,8 +91,12 @@ Pasos:
 3. Crea una nueva consulta
 4. Copia y pega todo el contenido del archivo `src/lib/supabase.sql`
 5. Ejecuta la consulta
-
-Esto creará las tablas y políticas necesarias para autenticación y perfiles.
+> Si la ejecución falla con un error sobre `gen_random_uuid()`, primero ejecuta:
+>
+> ```sql
+> CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+> ```
+>Esto creará las tablas y políticas necesarias para autenticación y perfiles.
 
 ---
 

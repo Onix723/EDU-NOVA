@@ -11,6 +11,12 @@ Sigue estos pasos:
 5. **Copia y pega TODO el contenido del archivo `src/lib/supabase.sql`**
 6. **Haz clic en "Run"** (o presiona Ctrl+Enter)
 
+> Si ves un error relacionado con `gen_random_uuid()`, ejecuta primero:
+>
+> ```sql
+> CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+> ```
+
 ### ✅ ¿Qué hace este script?
 - Crea la tabla `profiles` con los campos necesarios
 - Habilita Row Level Security (RLS) automáticamente

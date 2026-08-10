@@ -1,4 +1,9 @@
 -- ====================================
+-- 0. REQUIRED EXTENSIONS
+-- ====================================
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- ====================================
 -- 1. PROFILES TABLE (Users)
 -- ====================================
 CREATE TABLE IF NOT EXISTS profiles (
@@ -54,7 +59,30 @@ CREATE POLICY "Teachers can update own courses" ON courses
   FOR UPDATE USING (teacher_id = auth.uid());
 
 -- ====================================
--- 3. COURSE_TOPICS TABLE
+-- 3. COURSE_STUDENTS TABLE (Enrollment)
+-- ====================================
+CREATE TABLE IF NOT EXISTS course_students (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  student_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  enrolled_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(course_id, student_id)
+);
+
+ALTER TABLE course_students ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view their enrollments" ON course_students;
+CREATE POLICY "Users can view their enrollments" ON course_students
+  FOR SELECT USING (student_id = auth.uid());
+
+DROP POLICY IF EXISTS "Teachers can view students in their courses" ON course_students;
+CREATE POLICY "Teachers can view students in their courses" ON course_students
+  FOR SELECT USING (
+    course_id IN (SELECT id FROM courses WHERE teacher_id = auth.uid())
+  );
+
+-- ====================================
+-- 4. COURSE_TOPICS TABLE
 -- ====================================
 CREATE TABLE IF NOT EXISTS course_topics (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -84,7 +112,7 @@ CREATE POLICY "Teachers can manage own course topics" ON course_topics
   );
 
 -- ====================================
--- 4. QUIZZES TABLE
+-- 5. QUIZZES TABLE
 -- ====================================
 CREATE TABLE IF NOT EXISTS quizzes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -114,7 +142,7 @@ CREATE POLICY "Teachers can manage own course quizzes" ON quizzes
   );
 
 -- ====================================
--- 5. QUIZ_QUESTIONS TABLE
+-- 6. QUIZ_QUESTIONS TABLE
 -- ====================================
 CREATE TABLE IF NOT EXISTS quiz_questions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -186,29 +214,6 @@ DROP POLICY IF EXISTS "Students can view own answers" ON quiz_answers;
 CREATE POLICY "Students can view own answers" ON quiz_answers
   FOR SELECT USING (
     attempt_id IN (SELECT id FROM quiz_attempts WHERE student_id = auth.uid())
-  );
-
--- ====================================
--- 8. COURSE_STUDENTS TABLE (Enrollment)
--- ====================================
-CREATE TABLE IF NOT EXISTS course_students (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
-  student_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  enrolled_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(course_id, student_id)
-);
-
-ALTER TABLE course_students ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Users can view their enrollments" ON course_students;
-CREATE POLICY "Users can view their enrollments" ON course_students
-  FOR SELECT USING (student_id = auth.uid());
-
-DROP POLICY IF EXISTS "Teachers can view students in their courses" ON course_students;
-CREATE POLICY "Teachers can view students in their courses" ON course_students
-  FOR SELECT USING (
-    course_id IN (SELECT id FROM courses WHERE teacher_id = auth.uid())
   );
 
 -- ====================================
