@@ -141,6 +141,10 @@ Puedes registrarte como:
 - Estudiante
 - Profesor
 
+Si no te permite registrarte ve a tu Supabase
+- ve al apartado de Authentication
+- Sign In / Providers
+- Confirm email (debe estar desactivado)
 ### Iniciar sesión
 
 Usa el correo y la contraseña con los que te registraste.
